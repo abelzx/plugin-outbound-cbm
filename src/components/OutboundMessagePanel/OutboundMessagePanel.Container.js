@@ -27,6 +27,7 @@ import { onSendClickHandler, handleClose } from "./clickHandlers";
 import { templates } from "../../utils/templates";
 import { PhoneNumberUtil, AsYouTypeFormatter } from "google-libphonenumber";
 import { fetchContentTemplates } from "../../utils/fetchContentTemplates";
+import { fetchActivePhoneNumbers } from "../../utils/fetchActivePhoneNumbers";
 
 const isWorkerAvailable = (worker) => {
   const { taskrouter_offline_activity_sid } =
@@ -54,6 +55,8 @@ const OutboundMessagePanel = (props) => {
   const [messageType, setMessageType] = useState("sms");
   const [contentTemplateSid, setContentTemplateSid] = useState("");
   const [contentTemplates, setContentTemplates] = useState([]);
+  const [fromNumber, setFromNumber] = useState("");
+  const [activePhoneNumbers, setActivePhoneNumbers] = useState([]);
   const useContentTemplates = process.env.FLEX_APP_USE_CONTENT_TEMPLATES
     ? process.env.FLEX_APP_USE_CONTENT_TEMPLATES.toLowerCase() === "true"
     : false;
@@ -70,10 +73,11 @@ const OutboundMessagePanel = (props) => {
   const isToNumberInvalid = !toNumberValid;
   const isContentTemplateMissing = !contentTemplateSid;
   const isMessageBodyEmpty = !messageBody.length;
+  const isFromNumberMissing = !fromNumber;
 
   const shouldBlockSend = isWhatsApp
-    ? isToNumberInvalid || (isContentTemplateMissing && isMessageBodyEmpty)
-    : isToNumberInvalid || isMessageBodyEmpty;
+    ? isToNumberInvalid || isFromNumberMissing || (isContentTemplateMissing && isMessageBodyEmpty)
+    : isToNumberInvalid || isFromNumberMissing || isMessageBodyEmpty;
 
   let friendlyPhoneNumber = null;
   const formatter = new AsYouTypeFormatter();
@@ -85,7 +89,8 @@ const OutboundMessagePanel = (props) => {
       toNumber,
       messageType,
       messageBody,
-      contentTemplateSid
+      contentTemplateSid,
+      fromNumber
     );
   };
 
@@ -100,6 +105,19 @@ const OutboundMessagePanel = (props) => {
       setContentTemplateSid("");
     }
   }, [messageType]);
+
+  useEffect(() => {
+    // Fetch active phone numbers when the panel opens
+    if (isOutboundMessagePanelOpen && activePhoneNumbers.length === 0) {
+      fetchActivePhoneNumbers().then((phoneNumbers) => {
+        setActivePhoneNumbers(phoneNumbers || []);
+        // Set the first phone number as default if available
+        if (phoneNumbers && phoneNumbers.length > 0) {
+          setFromNumber(phoneNumbers[0].phoneNumber);
+        }
+      });
+    }
+  }, [isOutboundMessagePanelOpen]);
 
   if (!isOutboundMessagePanelOpen) {
     if (toNumber !== "+1") setToNumber("+1");
@@ -166,6 +184,28 @@ const OutboundMessagePanel = (props) => {
 
             {/* Conditional Rendering Based on Message Type */}
             <MessageContainer theme={props.theme}>
+              {/* From Number Dropdown */}
+              <Label htmlFor="from_number">From</Label>
+              <Select
+                id="from_number"
+                onChange={(e) => setFromNumber(e.target.value)}
+                value={fromNumber}
+              >
+                <Option value="placeholder" disabled>Choose a From</Option>
+                {activePhoneNumbers.map((phone) => (
+                  <Option value={phone.phoneNumber} key={phone.sid}>
+                    {phone.friendlyName}
+                  </Option>
+                ))}
+              </Select>
+
+              <Box backgroundColor="colorBackgroundBody">
+                <Separator
+                  orientation="horizontal"
+                  verticalSpacing="space50"
+                />
+              </Box>
+
               {messageType === "whatsapp" && useContentTemplates ? (
                 <>
                   {/* Content Templates Dropdown for WhatsApp */}
@@ -203,7 +243,7 @@ const OutboundMessagePanel = (props) => {
                     value={messageBody}
                   />
 
-                  <Box backgroundColor="colorBackgroundBody" padding="space50">
+                  <Box backgroundColor="colorBackgroundBody">
                     <Separator
                       orientation="horizontal"
                       verticalSpacing="space50"

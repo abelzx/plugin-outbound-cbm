@@ -8,14 +8,22 @@ export const onSendClickHandler = (
   toNumber,
   messageType,
   messageBody,
-  contentTemplateSid
+  contentTemplateSid,
+  fromNumber
 ) => {
+  // Use the selected fromNumber, or fall back to env variables if not provided
+  const defaultFromNumber = messageType === "whatsapp"
+    ? process.env.FLEX_APP_TWILIO_WHATSAPP_FROM_NUMBER
+    : process.env.FLEX_APP_TWILIO_FROM_NUMBER;
+  
+  const selectedFromNumber = fromNumber || defaultFromNumber;
+
   let payload = {
     destination: messageType === "whatsapp" ? "whatsapp:" + toNumber : toNumber,
     callerId:
       messageType === "whatsapp"
-        ? "whatsapp:" + process.env.FLEX_APP_TWILIO_WHATSAPP_FROM_NUMBER
-        : process.env.FLEX_APP_TWILIO_FROM_NUMBER,
+        ? "whatsapp:" + selectedFromNumber
+        : selectedFromNumber,
     body: messageBody,
     contentTemplateSid,
     messageType,

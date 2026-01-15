@@ -1,6 +1,6 @@
 {
   "name": "outbound-messaging",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -8,14 +8,14 @@
     "deploy": "twilio-run deploy"
   },
   "dependencies": {
-    "@twilio/runtime-handler": "2.0.0",
-    "twilio": "^4.23.0",
+    "@twilio/runtime-handler": "2.0.1",
+    "twilio": "^5.3.0",
     "twilio-flex-token-validator": "^1.6.0"
   },
   "devDependencies": {
-    "twilio-run": "^4.0.0"
+    "twilio-run": "^4.1.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

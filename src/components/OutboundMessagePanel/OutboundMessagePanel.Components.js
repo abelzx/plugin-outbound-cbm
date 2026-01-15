@@ -30,7 +30,7 @@ export const MessageContainer = styled("div")`
 `;
 
 export const SendMessageContainer = styled("div")`
-  padding: ${(p) => p.theme.tokens.spacings.space50} 0;
+  padding: ${(p) => p.theme.tokens.spacings.space50};
 `;
 export const MessageTypeContainer = styled("div")`
   padding: ${(p) => p.theme.tokens.spacings.space50};
